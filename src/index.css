@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* For Webkit Browsers (Chrome, Edge, Safari) */
+::-webkit-scrollbar {
+    width: 8px;
+    /* Width of the scrollbar */
+    height: 8px;
+    /* Height of the scrollbar (horizontal) */
+}
+
+
+
+::-webkit-scrollbar-track {
+    background: #1E1F20;
+    /* Track background */
+    border-radius: 4px;
+}
