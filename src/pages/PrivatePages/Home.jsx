@@ -8,11 +8,13 @@ import { RiChatHistoryLine } from "react-icons/ri";
 import { CgDetailsMore } from "react-icons/cg";
 import ChatItem from '../../components/ChatItem';
 import ChatScreen from '../../components/ChatScreen';
-
+import toast from "react-hot-toast"
 const Home = () => {
     const [userData, setUserData] = useState({});
     const [selectedOption, setSelectedOption] = useState('chats');
     const [selectedChat, setSelectedChat] = useState(null);
+    const [contacts, setContacts] = useState([]);
+    const [conversations, setCpnversations] = useState([]);
 
     console.log("selectedChat", selectedChat);
 
@@ -105,6 +107,43 @@ const Home = () => {
             image: "https://attic.sh/cp1hqhupj4wih5fzfutey2ns5krq"
         }
     ];
+    // /
+    const fetchConversations = async () => {
+        try {
+            const response = await api.get("/chat/get-conversations");
+            console.log(response);
+
+            if (response.status === 200) {
+                console.log(response.data);
+                setCpnversations(response.data?.conversations);
+            }
+        } catch (error) {
+            toast.error("Error fetching contacts");
+            console.log(error);
+
+        }
+    }
+
+    const fetchContacts = async () => {
+        try {
+            const response = await api.get("/chat/get-all-available-users");
+            console.log(response);
+
+            if (response.status === 200) {
+                console.log(response.data);
+                setContacts(response.data?.users);
+            }
+        } catch (error) {
+            toast.error("Error fetching contacts");
+            console.log(error);
+
+        }
+    }
+
+    useEffect(() => {
+        fetchConversations();
+        fetchContacts()
+    }, [])
 
 
     return (
@@ -139,8 +178,8 @@ const Home = () => {
 
                         <div className='flex flex-col gap-3 mt-4 overflow-y-auto' style={{ maxHeight: 'calc(100vh - 200px)' }}>
                             {
-                                users.map((user, index) => (
-                                    <ChatItem setSelectedChat={setSelectedChat} key={index} user={user} />
+                                conversations && conversations.map((user, index) => (
+                                    <ChatItem setSelectedOption={setSelectedOption} setSelectedChat={setSelectedChat} key={index} user={user} mode="chats" />
                                 ))
                             }
                         </div>
@@ -161,15 +200,15 @@ const Home = () => {
 
                         <div className='flex flex-col gap-3 mt-4 overflow-y-auto' style={{ maxHeight: 'calc(100vh - 200px)' }}>
                             {
-                                users.map((user, index) => (
-                                    <ChatItem setSelectedChat={setSelectedChat} key={index} user={user} />
+                                contacts && contacts.map((user, index) => (
+                                    <ChatItem setSelectedOption={setSelectedOption} setSelectedChat={setSelectedChat} key={index} user={user} mode="contacts" />
                                 ))
                             }
                         </div>
                     </div>
                 )}
 
-                <ChatScreen selectedChat={selectedChat} />
+                <ChatScreen selectedChat={selectedChat} userData={userData} />
             </div>
         </div>
     );
