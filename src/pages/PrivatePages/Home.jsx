@@ -8,13 +8,18 @@ import { RiChatHistoryLine } from "react-icons/ri";
 import { CgDetailsMore } from "react-icons/cg";
 import ChatItem from '../../components/ChatItem';
 import ChatScreen from '../../components/ChatScreen';
-import toast from "react-hot-toast"
+import toast from "react-hot-toast";
+
+import { io } from "socket.io-client";
+import { socket } from './Socket';
+
 const Home = () => {
     const [userData, setUserData] = useState({});
     const [selectedOption, setSelectedOption] = useState('chats');
     const [selectedChat, setSelectedChat] = useState(null);
     const [contacts, setContacts] = useState([]);
     const [conversations, setCpnversations] = useState([]);
+    const [onlineUsers, setOnlineUsers] = useState([]);
 
     console.log("selectedChat", selectedChat);
 
@@ -24,6 +29,7 @@ const Home = () => {
             if (response.status === 200) {
                 console.log(response.data);
                 setUserData(response.data);
+                localStorage.setItem("userId", JSON.stringify(response.data._id));
             }
         } catch (error) {
             console.log(error);
@@ -33,6 +39,30 @@ const Home = () => {
     useEffect(() => {
         getDetails();
     }, []);
+
+    useEffect(() => {
+        if (!userData._id) return;
+        // const socket = io(`http://localhost:5000?userId=${userData._id}`, { autoConnect: true });
+
+        socket.on("connect", () => {
+            console.log("socket connected");
+        });
+
+        socket.on("disconnect", () => {
+            console.log("socket disconnected");
+        });
+
+        socket.on("onlineUsers", (data) => {
+            console.log("online users", data);
+            setOnlineUsers(data);
+        });
+
+        return () => {
+            socket.off("connect");
+            socket.off("disconnect");
+            socket.disconnect();
+        }
+    }, [userData._id])
 
     // Sample data for 10 users
     const users = [
@@ -179,7 +209,7 @@ const Home = () => {
                         <div className='flex flex-col gap-3 mt-4 overflow-y-auto' style={{ maxHeight: 'calc(100vh - 200px)' }}>
                             {
                                 conversations && conversations.map((user, index) => (
-                                    <ChatItem setSelectedOption={setSelectedOption} setSelectedChat={setSelectedChat} key={index} user={user} mode="chats" />
+                                    <ChatItem setSelectedOption={setSelectedOption} setSelectedChat={setSelectedChat} key={index} user={user} mode="chats" isOnline={onlineUsers.includes(user.otherUser._id)} />
                                 ))
                             }
                         </div>
@@ -208,7 +238,7 @@ const Home = () => {
                     </div>
                 )}
 
-                <ChatScreen selectedChat={selectedChat} userData={userData} />
+                <ChatScreen selectedChat={selectedChat} userData={userData} isOnline={onlineUsers.includes(selectedChat?.userId)} />
             </div>
         </div>
     );

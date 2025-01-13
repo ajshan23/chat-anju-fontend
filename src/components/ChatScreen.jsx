@@ -3,15 +3,16 @@ import { IoCallOutline, IoVideocamOutline, IoSendOutline } from "react-icons/io5
 import { useEffect, useState } from "react";
 import api from "../apiConfig/api";
 import toast from "react-hot-toast";
+import { socket } from "../pages/PrivatePages/Socket";
 
-const ChatScreen = ({ selectedChat, userData }) => {
+const ChatScreen = ({ selectedChat, userData, isOnline }) => {
     const [input, setInput] = useState("");
     const [conversationId, setConversationId] = useState("");
     const [messages, setMessages] = useState([]);
     const [loading, setLoading] = useState(false);
 
     const fetchMessages = async () => {
-        console.log("call is going");
+        console.log("call is going", selectedChat);
 
         if (!selectedChat?.userId) return;
         setLoading(true);
@@ -57,6 +58,20 @@ const ChatScreen = ({ selectedChat, userData }) => {
         }
     }, [selectedChat]);
 
+    useEffect(() => {
+        socket.on("newMessage", (data) => {
+            console.log("new message", data);
+            console.log("conversationId", conversationId);
+            console.log("data.conversationId ", data.conversationId);
+
+            if (data.conversationId === conversationId) {
+                console.log("kery");
+
+                setMessages([...messages, data]);
+            }
+        });
+    }, [selectedChat])
+
     if (!selectedChat) {
         return (
             <div style={{ flex: 18 }} className="flex items-center justify-center bg-[#1E1F20] text-white">
@@ -77,7 +92,7 @@ const ChatScreen = ({ selectedChat, userData }) => {
                     />
                     <div className="ml-2">
                         <div className="text-white text-lg">{selectedChat.username}</div>
-                        <div className="text-sm text-gray-200">online</div>
+                        {isOnline && <div className="text-sm text-gray-200">online</div>}
                     </div>
                 </div>
                 <div className="flex flex-row rounded-md bg-[#1d1e1f]">
@@ -92,7 +107,7 @@ const ChatScreen = ({ selectedChat, userData }) => {
 
             {/* Chat Content */}
             <div className="w-full h-full bg-[#1E1F20]" style={{ overflowY: "auto" }}>
-                <div className="flex flex-col gap-3 h-[90%] px-4 py-2">
+                <div className="flex flex-col gap-3 h-[90%] px-4 py-2" style={{ overflowY: "scroll" }}>
                     {loading ? (
                         <p className="text-white">Loading messages...</p>
                     ) : messages.length > 0 ? (
