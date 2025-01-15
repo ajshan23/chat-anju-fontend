@@ -9,9 +9,10 @@ import { CgDetailsMore } from "react-icons/cg";
 import ChatItem from '../../components/ChatItem';
 import ChatScreen from '../../components/ChatScreen';
 import toast from "react-hot-toast";
+import { CgProfile } from "react-icons/cg";
 
-import { io } from "socket.io-client";
 import { socket } from './Socket';
+import axios from 'axios';
 
 const Home = () => {
     const [userData, setUserData] = useState({});
@@ -20,7 +21,7 @@ const Home = () => {
     const [contacts, setContacts] = useState([]);
     const [conversations, setCpnversations] = useState([]);
     const [onlineUsers, setOnlineUsers] = useState([]);
-
+    const [selectedFile, setSelectedFile] = useState(null);
     console.log("selectedChat", selectedChat);
 
     const getDetails = async () => {
@@ -169,6 +170,25 @@ const Home = () => {
 
         }
     }
+    const handleChangeProfilePic = async() => {
+        try {
+            if (!selectedFile) {
+                toast('Please select a image first!');
+                return;
+            }
+            const formData = new FormData();
+            formData.append('image', selectedFile); // 'image' should match the backend key for the file
+            const response = await axios.post('http://your-backend-url/upload', formData, {
+                headers: {
+                  'Content-Type': 'multipart/form-data',
+                },
+              });
+              console.log('File uploaded successfully:', response.data);
+        } catch (error) {
+            console.log(error);
+            toast.error("Error changing profile pic");
+        }
+    }
 
     useEffect(() => {
         fetchConversations();
@@ -187,7 +207,10 @@ const Home = () => {
                     <IoChatbubbleEllipsesOutline size={20} color='gray' onClick={() => setSelectedOption("chats")} />
                     <IoCallOutline size={20} color='gray' onClick={() => setSelectedOption("contacts")} />
                     <RiChatHistoryLine size={20} color='gray' />
+                    <CgProfile size={20} color='gray' onClick={() => setSelectedChat("profile")} />
+
                 </div>
+
                 {selectedOption === "chats" ? (
                     <div style={{ flex: 8 }} className='bg-[#333537] rounded-tl-xl px-3 pt-4'>
                         <div className='flex text-white text-lg justify-between items-center pb-4'>
@@ -215,7 +238,7 @@ const Home = () => {
                         </div>
                     </div>
                 ) : (
-                    <div style={{ flex: 8 }} className='bg-[#333537] rounded-t-xl px-3 pt-4'>
+                    selectedChat === "contacts" ? <div style={{ flex: 8 }} className='bg-[#333537] rounded-t-xl px-3 pt-4'>
                         <div className='flex text-white text-lg justify-between items-center pb-4'>
                             <div onClick={() => console.log("clicked contacts")}>Contacts</div>
                         </div>
@@ -235,10 +258,24 @@ const Home = () => {
                                 ))
                             }
                         </div>
+                    </div> : <div style={{ flex: 26 }} className='bg-[#333537] rounded-tl-xl px-3 pt-4 text-white'>
+                        <div className='text-2xl'>Profile</div>
+                        <div className='flex flex-col items-start gap-5 mt-5'>
+                            <img
+                                className="w-20 h-20 rounded-full"
+                                src={userData?.avatar}
+                                alt={`${userData?.username}'s avatar`}
+                            />
+                            <input type="image" onChange={(e) => setSelectedFile(e.target.files[0])} />
+                            <button onClick={handleChangeProfilePic}>Change my profile pick</button>
+                            <div className='text-xl'>{userData?.username}</div>
+                            <div className='text-sm text-gray-400'>{userData?.email}</div>
+                        </div>
                     </div>
                 )}
 
-                <ChatScreen selectedChat={selectedChat} userData={userData} isOnline={onlineUsers.includes(selectedChat?.userId)} />
+                {selectedChat !== "profile" && <ChatScreen selectedChat={selectedChat} userData={userData} isOnline={onlineUsers.includes(selectedChat?.userId)} />}
+
             </div>
         </div>
     );
